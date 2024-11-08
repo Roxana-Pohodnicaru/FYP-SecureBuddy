@@ -59,7 +59,7 @@ def display_menu():
     global is_menu_visible
     
     # slide frame to be displayed on screen
-    for i in range(-1000, 0, 15):
+    for i in range(-1000, 0, 50):
         
         # display menu frame
         menu_frame.place(x=i, y=0)
@@ -71,6 +71,7 @@ def display_menu():
         root.after(10)
         
     is_menu_visible = True
+    
 
 
 # hamburger menu icon
@@ -85,8 +86,23 @@ menu_frame = tk.Frame(root, bg="lightgray", width=800, height=1200)
 # when program starts, position hamburger menu off screen
 menu_frame.place(x=-1000, y=0) 
 
-# hamburger button always shows - might change this to an 'x' / 'esc' functionality
+# hamburger button always shows
+# TODO include 'x' / 'esc' functionality
 hamburger_button.lift()
+
+# buttons for menu_frame
+scan_files_button = tk.Button(menu_frame, text="Scan Files", font=("Arial", 16), command=print("placeholder"))
+scan_history_button = tk.Button(menu_frame, text="Scan History", font=("Arial", 16), command=print("placeholder"))
+education_button = tk.Button(menu_frame, text="Education", font=("Arial", 16), command=print("placeholder"))
+
+# manual button height
+# TODO need to make this automatic
+button_height = 225
+
+# placing location for buttons
+scan_files_button.place(x=0, y=0, width=800, height=button_height)
+scan_history_button.place(x=0, y=button_height, width=800, height=button_height)
+education_button.place(x=0, y=button_height * 2, width=800, height=button_height)
 
 # main loop
 root.mainloop()
