@@ -93,6 +93,11 @@ def show_page(page):
     
     # need to show hamburger button
     hamburger_button.tkraise()
+    
+    # display specific items only when that particular page is called
+    if page == scan_files_page:
+        
+        upload_file_button.tkraise()
 
 
 
@@ -122,13 +127,22 @@ scan_history_button.place(x=0, y=button_height, width=800, height=button_height)
 education_button.place(x=0, y=button_height * 2, width=800, height=button_height)
 
 
+
 # scan files page - testing with green background
-scan_files_page = tk.Frame(root, bg="green", width=1980, height=1200)
+scan_files_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scan_files_page.place(x=0, y=0)
+
+# upload file button for scan files page
+upload_file_button = tk.Button(scan_files_page, text="Upload File", font=("Arial", 16), command=print("placeholder"))
+upload_file_button.place(x=575, y=550, height=50, width=150)
+
+
 
 # scan history page - testing with blue background
 scan_history_page = tk.Frame(root, bg="blue", width=1980, height=1200)
 scan_history_page.place(x=0, y=0)
+
+
 
 # education page - testing with orange background
 education_page = tk.Frame(root, bg="orange", width=1980, height=1200)
