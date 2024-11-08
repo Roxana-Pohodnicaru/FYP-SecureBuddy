@@ -123,6 +123,14 @@ def upload_file():
         # show scanning page
         scanning_page.tkraise()
         
+        # function something like
+        # scan_file()
+        # then within this function it would be like
+        # generate_report()
+        
+        # as a temporary instead of file scanning alg
+        root.after(2000, lambda: show_page(scan_complete_page))
+        
     else:
         label_scan_files.config(text="No file selected")
         
@@ -173,6 +181,11 @@ label_scan_files.place(x=575, y=570)
 # once a file is uploaded - begin scanning
 scanning_page = tk.Frame(root, bg="red", width=1980, height=1200)
 scanning_page.place(x=0, y=0)
+
+# scan complete page
+# once a file finished scanning - show report
+scan_complete_page = tk.Frame(root, bg="yellow", width=1980, height=1200)
+scan_complete_page.place(x=0, y=0)
 
 
 # scan history page - testing with blue background
