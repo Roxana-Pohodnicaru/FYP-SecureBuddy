@@ -1,5 +1,7 @@
 # imports
+import os
 import tkinter as tk
+from tkinter import filedialog
 
 
 # tkinter object
@@ -100,6 +102,25 @@ def show_page(page):
         upload_file_button.tkraise()
 
 
+# function to handle file upload
+def upload_file():
+    
+    # open file dialog
+    file_path = filedialog.askopenfilename()
+    
+    # if a file is selected
+    if file_path:
+        
+        # get name of file
+        file_name = os.path.basename(file_path)
+        
+        # update label on scan_files_page
+        label_scan_files.config(text=f"Selected file: {file_name}")
+        
+    else:
+        label_scan_files.config(text="No file selected")
+        
+
 
 # hamburger menu icon (now placed as a child of welcome_page)
 hamburger_button = tk.Button(root, text="☰", font=("Arial", 20), command=hamburger_menu)
@@ -133,9 +154,14 @@ scan_files_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scan_files_page.place(x=0, y=0)
 
 # upload file button for scan files page
-upload_file_button = tk.Button(scan_files_page, text="Upload File", font=("Arial", 16), command=print("placeholder"))
-upload_file_button.place(x=575, y=550, height=50, width=150)
+upload_file_button = tk.Button(scan_files_page, text="Upload File", font=("Arial", 16), command=upload_file)
+upload_file_button.place(x=575, y=500, height=50, width=150)
 
+# label to show selected file
+label_scan_files = tk.Label(scan_files_page, text="No file selected", font=("Arial", 14))
+
+# TODO make this follow location of upload file button center
+label_scan_files.place(x=575, y=570)
 
 
 # scan history page - testing with blue background
