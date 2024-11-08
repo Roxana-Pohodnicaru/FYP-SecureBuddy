@@ -117,6 +117,12 @@ def upload_file():
         # update label on scan_files_page
         label_scan_files.config(text=f"Selected file: {file_name}")
         
+        # hide scan_files_page
+        scan_files_page.lower()
+        
+        # show scanning page
+        scanning_page.tkraise()
+        
     else:
         label_scan_files.config(text="No file selected")
         
@@ -162,6 +168,11 @@ label_scan_files = tk.Label(scan_files_page, text="No file selected", font=("Ari
 
 # TODO make this follow location of upload file button center
 label_scan_files.place(x=575, y=570)
+
+# scanning page
+# once a file is uploaded - begin scanning
+scanning_page = tk.Frame(root, bg="red", width=1980, height=1200)
+scanning_page.place(x=0, y=0)
 
 
 # scan history page - testing with blue background
