@@ -81,7 +81,8 @@ def display_menu():
     is_menu_visible = True
 
 
-# function to display different page based on buttons clicked in hamburger menu
+# function to display different pages
+# page is dependant on what button is clicked in hamburger menu frame
 def show_page(page):
     
     # raise the page on the top
@@ -108,8 +109,8 @@ menu_frame.place(x=-1000, y=0)
 
 # buttons for menu_frame
 scan_files_button = tk.Button(menu_frame, text="Scan Files", font=("Arial", 16), command=lambda: show_page(scan_files_page))
-scan_history_button = tk.Button(menu_frame, text="Scan History", font=("Arial", 16), command=print("placeholder"))
-education_button = tk.Button(menu_frame, text="Education", font=("Arial", 16), command=print("placeholder"))
+scan_history_button = tk.Button(menu_frame, text="Scan History", font=("Arial", 16), command=lambda: show_page(scan_history_page))
+education_button = tk.Button(menu_frame, text="Education", font=("Arial", 16), command=lambda: show_page(education_page))
 
 # manual button height
 # TODO need to make this automatic
@@ -125,6 +126,13 @@ education_button.place(x=0, y=button_height * 2, width=800, height=button_height
 scan_files_page = tk.Frame(root, bg="green", width=1980, height=1200)
 scan_files_page.place(x=0, y=0)
 
+# scan history page - testing with blue background
+scan_history_page = tk.Frame(root, bg="blue", width=1980, height=1200)
+scan_history_page.place(x=0, y=0)
+
+# education page - testing with orange background
+education_page = tk.Frame(root, bg="orange", width=1980, height=1200)
+education_page.place(x=0, y=0)
 
 # need to show at start
 welcome_page.tkraise()
