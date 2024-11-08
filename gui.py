@@ -100,6 +100,11 @@ def show_page(page):
     if page == scan_files_page:
         
         upload_file_button.tkraise()
+        
+    # if scanning is complete, stop showing scanning.png
+    if page == scan_report_page:
+        
+        scanning_image_label.place_forget()
 
 
 # function to handle file upload
@@ -129,7 +134,7 @@ def upload_file():
         # generate_report()
         
         # as a temporary instead of file scanning alg
-        root.after(2000, lambda: show_page(scan_complete_page))
+        root.after(3000, lambda: show_page(scan_report_page))
         
     else:
         label_scan_files.config(text="No file selected")
@@ -179,13 +184,25 @@ label_scan_files.place(x=575, y=570)
 
 # scanning page
 # once a file is uploaded - begin scanning
-scanning_page = tk.Frame(root, bg="red", width=1980, height=1200)
+scanning_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scanning_page.place(x=0, y=0)
 
-# scan complete page
+# image for scanning
+scanning_image = tk.PhotoImage(file="images/scanning.png")
+scanning_image_label = tk.Label(scanning_page, image=scanning_image)
+scanning_image_label.place(x=500, y=200)
+
+# scan complete
 # once a file finished scanning - show report
-scan_complete_page = tk.Frame(root, bg="yellow", width=1980, height=1200)
-scan_complete_page.place(x=0, y=0)
+scan_report_page = tk.Frame(root, bg="white", width=1980, height=1200)
+scan_report_page.place(x=0, y=0)
+
+# scan complete message
+scan_complete_message = "Scan Complete. Here are your results"
+scan_complete_message_label = tk.Label(scan_report_page, text=scan_complete_message, font=("Arial", 14))
+scan_complete_message_label.place(x=500, y=200)
+
+# TODO scan results placeholder text
 
 
 # scan history page - testing with blue background
