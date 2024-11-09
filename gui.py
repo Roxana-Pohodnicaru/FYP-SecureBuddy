@@ -15,6 +15,7 @@ root.title("SecureBuddy")
 # screen size
 root.geometry("1980x1200")
 
+
 # welcome page
 welcome_page = tk.Frame(root, width=1980, height=1200)
 welcome_page.place(x=0, y=0, relwidth=1, relheight=1)
@@ -22,8 +23,24 @@ welcome_page.place(x=0, y=0, relwidth=1, relheight=1)
 # text to show
 text = """Welcome to SecureBuddy"""
 # label for text
-label = tk.Label(welcome_page, text=text)
-label.pack()
+label = tk.Label(welcome_page, text=text,  font=("Arial", 30))
+label.place(x=425, y=50)
+
+# buttons for welcome page
+# scan files
+welcome_scan_files_button = tk.Button(welcome_page, text="Scan Files", font=("Arial", 16), command=lambda: show_page(scan_files_page))
+# placing button
+welcome_scan_files_button.place(x=100, y=250, width=300, height=250)
+
+# scan history
+welcome_scan_history_button = tk.Button(welcome_page, text="Scan History", font=("Arial", 16), command=lambda: show_page(scan_history_page))
+# placing button
+welcome_scan_history_button.place(x=500, y=250, width=300, height=250)
+
+# education
+welcome_education_button = tk.Button(welcome_page, text="Scan History", font=("Arial", 16), command=lambda: show_page(education_page))
+# placing button
+welcome_education_button.place(x=900, y=250, width=300, height=250)
 
 
 # bool to check if the hamburger menu frame is visible
@@ -195,7 +212,7 @@ education_button.place(x=0, y=button_height * 2, width=800, height=button_height
 
 
 
-# scan files page - testing with green background
+# scan files page
 scan_files_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scan_files_page.place(x=0, y=0)
 
