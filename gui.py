@@ -2,10 +2,12 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
+from tkinterdnd2 import TkinterDnD, DND_FILES
 
 
 # tkinter object
-root = tk.Tk()
+# tkinterDnD has all tkinter functionality + file drag and drop
+root = TkinterDnD.Tk()
 
 # title of program
 root.title("SecureBuddy")
@@ -119,8 +121,8 @@ def upload_file():
         # get name of file
         file_name = os.path.basename(file_path)
         
-        # update label on scan_files_page
-        label_scan_files.config(text=f"Selected file: {file_name}")
+        # display file name on scanning page
+        scanning_file_name_label.config(text=f"Selected file: {file_name}")
         
         # hide scan_files_page
         scan_files_page.lower()
@@ -137,8 +139,33 @@ def upload_file():
         root.after(3000, lambda: show_page(scan_report_page))
         
     else:
-        label_scan_files.config(text="No file selected")
+        scanning_file_name_label.config(text="No file selected")
         
+
+def on_drop(event):
+    
+    file_path = event.data
+    
+    # get name of file
+    file_name = os.path.basename(file_path)
+        
+    # display file name on scanning page
+    scanning_file_name_label.config(text=f"Selected file: {file_name}")
+        
+    # hide scan_files_page
+    scan_files_page.lower()
+        
+    # show scanning page
+    scanning_page.tkraise()
+        
+    # function something like
+    # scan_file()
+    # then within this function it would be like
+    # generate_report()
+        
+    # as a temporary instead of file scanning alg
+    root.after(3000, lambda: show_page(scan_report_page))
+
 
 
 # hamburger menu icon (now placed as a child of welcome_page)
@@ -176,11 +203,14 @@ scan_files_page.place(x=0, y=0)
 upload_file_button = tk.Button(scan_files_page, text="Upload File", font=("Arial", 16), command=upload_file)
 upload_file_button.place(x=575, y=500, height=50, width=150)
 
-# label to show selected file
-label_scan_files = tk.Label(scan_files_page, text="No file selected", font=("Arial", 14))
+# drag and drop for scan files page
+drop_area = tk.Label(scan_files_page, text="Drag and drop a file here or click 'Upload' button", font=("Arial", 16), relief="groove")
+drop_area.place(x=200, y=150, width=900, height=300)
 
-# TODO make this follow location of upload file button center
-label_scan_files.place(x=575, y=570)
+# bind drop event to on_drop function
+drop_area.drop_target_register(DND_FILES)
+drop_area.dnd_bind('<<Drop>>', on_drop)
+
 
 # scanning page
 # once a file is uploaded - begin scanning
@@ -191,6 +221,11 @@ scanning_page.place(x=0, y=0)
 scanning_image = tk.PhotoImage(file="images/scanning.png")
 scanning_image_label = tk.Label(scanning_page, image=scanning_image)
 scanning_image_label.place(x=500, y=200)
+
+# label to show selected file
+scanning_file_name_label = tk.Label(scanning_page, text="No file selected", font=("Arial", 14))
+scanning_file_name_label.place(x=500, y=50)
+
 
 # scan complete
 # once a file finished scanning - show report
