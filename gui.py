@@ -21,7 +21,7 @@ welcome_page = tk.Frame(root, width=1980, height=1200)
 welcome_page.place(x=0, y=0, relwidth=1, relheight=1)
 
 # text to show
-text = """Welcome to SecureBuddy"""
+text = "Welcome to SecureBuddy"
 # label for text
 label = tk.Label(welcome_page, text=text,  font=("Arial", 30))
 label.place(x=425, y=50)
@@ -216,12 +216,18 @@ education_button.place(x=0, y=button_height * 2, width=800, height=button_height
 scan_files_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scan_files_page.place(x=0, y=0)
 
+# scan files page header text
+scan_files_header = "Scan Files"
+scan_files_header_label = tk.Label(scan_files_page, text=scan_files_header, font=("Arial", 20))
+scan_files_header_label.place(x=575, y=50)
+
+
 # upload file button for scan files page
 upload_file_button = tk.Button(scan_files_page, text="Upload File", font=("Arial", 16), command=upload_file)
 upload_file_button.place(x=575, y=500, height=50, width=150)
 
 # drag and drop for scan files page
-drop_area = tk.Label(scan_files_page, text="Drag and drop a file here or click 'Upload' button", font=("Arial", 16), relief="groove")
+drop_area = tk.Label(scan_files_page, text="Drag and drop a file here or click 'Upload File' button", font=("Arial", 16), relief="groove")
 drop_area.place(x=200, y=150, width=900, height=300)
 
 # bind drop event to on_drop function
@@ -234,6 +240,11 @@ drop_area.dnd_bind('<<Drop>>', on_drop)
 scanning_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scanning_page.place(x=0, y=0)
 
+# scanning page header text
+scanning_header = "Scanning"
+scanning_header_label = tk.Label(scanning_page, text=scanning_header, font=("Arial", 20))
+scanning_header_label.place(x=575, y=50)
+
 # image for scanning
 scanning_image = tk.PhotoImage(file="images/scanning.png")
 scanning_image_label = tk.Label(scanning_page, image=scanning_image)
@@ -241,13 +252,19 @@ scanning_image_label.place(x=500, y=200)
 
 # label to show selected file
 scanning_file_name_label = tk.Label(scanning_page, text="No file selected", font=("Arial", 14))
-scanning_file_name_label.place(x=500, y=50)
+scanning_file_name_label.place(x=500, y=500)
 
 
 # scan complete
 # once a file finished scanning - show report
 scan_report_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scan_report_page.place(x=0, y=0)
+
+# scan report header text
+scan_report_header = "Scan Results"
+scan_report_header_label = tk.Label(scan_report_page, text=scan_report_header, font=("Arial", 20))
+scan_report_header_label.place(x=575, y=50)
+
 
 # scan complete message
 scan_complete_message = "Scan Complete. Here are your results"
