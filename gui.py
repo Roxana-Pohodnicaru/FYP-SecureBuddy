@@ -38,7 +38,7 @@ welcome_scan_history_button = tk.Button(welcome_page, text="Scan History", font=
 welcome_scan_history_button.place(x=500, y=250, width=300, height=250)
 
 # education
-welcome_education_button = tk.Button(welcome_page, text="Scan History", font=("Arial", 16), command=lambda: show_page(education_page))
+welcome_education_button = tk.Button(welcome_page, text="Education", font=("Arial", 16), command=lambda: show_page(education_page))
 # placing button
 welcome_education_button.place(x=900, y=250, width=300, height=250)
 
@@ -274,15 +274,70 @@ scan_complete_message_label.place(x=500, y=200)
 # TODO scan results placeholder text
 
 
-# scan history page - testing with blue background
-scan_history_page = tk.Frame(root, bg="blue", width=1980, height=1200)
+# scan history page
+scan_history_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scan_history_page.place(x=0, y=0)
 
+# scan history header text
+scan_history_header = "Scan History"
+scan_history_header_label = tk.Label(scan_history_page, text=scan_history_header, font=("Arial", 20))
+scan_history_header_label.place(x=575, y=50)
+
+# placeholder text of previous scans
+# name
+scan_history_scan1 = "Scan 1"
+scan_history_scan1_label = tk.Label(scan_history_page, text=scan_history_scan1, font=("Arial", 14))
+scan_history_scan1_label.place(x=200, y=200)
+
+# date
+scan_history_scan1_date = "10/11/2024"
+scan_history_scan1_date_label = tk.Label(scan_history_page, text=scan_history_scan1_date, font=("Arial", 14))
+scan_history_scan1_date_label.place(x=600, y=200)
+
+# view scan button placeholder
+view_scan_button = tk.Button(scan_history_page, text="View Scan", font=("Arial", 14), command=print("placeholder"))
+view_scan_button.place(x=1000, y=190)
 
 
-# education page - testing with orange background
-education_page = tk.Frame(root, bg="orange", width=1980, height=1200)
+# education page
+education_page = tk.Frame(root, bg="white", width=1980, height=1200)
 education_page.place(x=0, y=0)
+
+# education header text
+education_header = "Education"
+education_header_label = tk.Label(education_page, text=education_header, font=("Arial", 20))
+education_header_label.place(x=575, y=50)
+
+# buttons for education tab
+# malware button
+education_malware_button = tk.Button(education_page, text="Malware", font=("Arial", 16), command=lambda: show_page(malware_page))
+# placing button
+education_malware_button.place(x=100, y=250, width=300, height=250)
+
+# file types button
+education_file_types_button = tk.Button(education_page, text="File Types", font=("Arial", 16), command=lambda: show_page(file_types_page))
+# placing button
+education_file_types_button.place(x=500, y=250, width=300, height=250)
+
+# prevention tips button
+education_prevention_tips_button = tk.Button(education_page, text="Prevention Tips", font=("Arial", 16), command=lambda: show_page(prevention_tips_page))
+# placing button
+education_prevention_tips_button.place(x=900, y=250, width=300, height=250)
+
+
+# malware page
+malware_page = tk.Frame(root, bg="white", width=1980, height=1200)
+malware_page.place(x=0, y=0)
+
+# file types page
+file_types_page = tk.Frame(root, bg="white", width=1980, height=1200)
+file_types_page.place(x=0, y=0)
+
+# prevention tips page
+prevention_tips_page = tk.Frame(root, bg="white", width=1980, height=1200)
+prevention_tips_page.place(x=0, y=0)
+
+
 
 # need to show at start
 welcome_page.tkraise()
