@@ -329,13 +329,30 @@ education_prevention_tips_button.place(x=900, y=250, width=300, height=250)
 malware_page = tk.Frame(root, bg="white", width=1980, height=1200)
 malware_page.place(x=0, y=0)
 
+# malware header text
+malware_header = "Malware"
+malware_header_label = tk.Label(malware_page, text=malware_header, font=("Arial", 20))
+malware_header_label.place(x=575, y=50)
+
+
 # file types page
 file_types_page = tk.Frame(root, bg="white", width=1980, height=1200)
 file_types_page.place(x=0, y=0)
 
+# file types header text
+file_types_header = "File Types"
+file_types_header_label = tk.Label(file_types_page, text=file_types_header, font=("Arial", 20))
+file_types_header_label.place(x=575, y=50)
+
+
 # prevention tips page
 prevention_tips_page = tk.Frame(root, bg="white", width=1980, height=1200)
 prevention_tips_page.place(x=0, y=0)
+
+# prevention tips header text
+prevention_tips_header = "Prevention Tips"
+prevention_tips_header_label = tk.Label(prevention_tips_page, text=prevention_tips_header, font=("Arial", 20))
+prevention_tips_header_label.place(x=575, y=50)
 
 
 
