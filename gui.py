@@ -3,6 +3,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 from tkinterdnd2 import TkinterDnD, DND_FILES
+from PIL import Image, ImageTk
 
 
 # tkinter object
@@ -269,9 +270,85 @@ scan_report_header_label.place(x=575, y=50)
 # scan complete message
 scan_complete_message = "Scan Complete. Here are your results"
 scan_complete_message_label = tk.Label(scan_report_page, text=scan_complete_message, font=("Arial", 14))
-scan_complete_message_label.place(x=500, y=200)
+scan_complete_message_label.place(x=500, y=150)
 
-# TODO scan results placeholder text
+# dummy text scan results - malware
+malware_dummy_message = "Malware Found: PHP script found within contents of file."
+malware_dummy_message_label = tk.Label(scan_report_page, text=malware_dummy_message, font=("Arial", 14))
+malware_dummy_message_label.place(x=10, y=300)
+
+
+# TEMP PAGE FOR PHP MALWARE FOR DEMO PURPOSES
+php_malware_page = tk.Frame(root, bg="white", width=1980, height=1200)
+php_malware_page.place(x=0, y=0)
+
+# php malware header text
+php_malware_header = "PHP"
+php_malware_header_label = tk.Label(php_malware_page, text=php_malware_header, font=("Arial", 20))
+php_malware_header_label.place(x=600, y=50)
+
+# text for php malware
+php_malware_text_1 = "What is PHP?"
+php_malware_text_1_label = tk.Label(php_malware_page, text=php_malware_text_1, font=("Arial", 15))
+php_malware_text_1_label.place(x=10, y=150)
+
+# text for php malware
+php_malware_text_2 = "PHP is a computer language. It is a set of instructions written so a computer can do some intended functionality. This is known as a script."
+php_malware_text_2_label = tk.Label(php_malware_page, text=php_malware_text_2, font=("Arial", 14), wraplength=900)
+php_malware_text_2_label.place(x=10, y=200)
+
+# text for php malware
+php_malware_text_3 = "PHP scripts can be executed if the file is opened. Some examples of script execution can include:"
+php_malware_text_3_label = tk.Label(php_malware_page, text=php_malware_text_3, font=("Arial", 14), wraplength=900)
+php_malware_text_3_label.place(x=10, y=300)
+
+# text for php malware
+php_malware_text_4 = "Reading contents of files"
+php_malware_text_4_label = tk.Label(php_malware_page, text=php_malware_text_4, font=("Arial", 14), wraplength=900)
+php_malware_text_4_label.place(x=10, y=350)
+
+# text for php malware
+php_malware_text_5 = "Modifying files"
+php_malware_text_5_label = tk.Label(php_malware_page, text=php_malware_text_5, font=("Arial", 14), wraplength=900)
+php_malware_text_5_label.place(x=10, y=400)
+
+# text for php malware
+php_malware_text_6 = "Deleting files"
+php_malware_text_6_label = tk.Label(php_malware_page, text=php_malware_text_6, font=("Arial", 14), wraplength=900)
+php_malware_text_6_label.place(x=10, y=450)
+
+# image for php malware
+image_path = "images/php.png"
+original_image = Image.open(image_path) 
+resized_image = original_image.resize((300, 200))
+php_image = ImageTk.PhotoImage(resized_image)
+
+php_image_label = tk.Label(php_malware_page, image=php_image)
+php_image_label.place(x=900, y=200)
+
+# button for php - TEMP
+more_info_php_malware_button =  tk.Button(scan_report_page, text="more info", font=("Arial, 12"), command=lambda: show_page(php_malware_page))
+more_info_php_malware_button.place(x=1150, y=300, height=50, width=90)
+
+
+# dummy text scan results - potential harm
+potential_harm_dummy_message = "Potential Harm: Running this file could allow attackers to control your computer system. This means that they may access your files."
+potential_harm_dummy_message_label = tk.Label(scan_report_page, text=potential_harm_dummy_message, font=("Arial", 14), wraplength=1200)
+potential_harm_dummy_message_label.place(x=10, y=400)
+
+# dummy button
+potential_harm_dummy_button = tk.Button(scan_report_page, text="more info", font=("Arial, 12"))
+potential_harm_dummy_button.place(x=1150, y=400, height=50, width=90)
+
+
+# dummy text scan results - prevention tips
+prevention_tips_dummy_message = "Prevention Tips: Only download files from trusted sources."
+prevention_tips_dummy_message_label = tk.Label(scan_report_page, text=prevention_tips_dummy_message, font=("Arial", 14))
+prevention_tips_dummy_message_label.place(x=10, y=500)
+
+# dummy button
+prevention_tips_dummy_button = tk.Button(scan_report_page, text="more info", font=("Arial, 12"))
+prevention_tips_dummy_button.place(x=1150, y=500, height=50, width=90)
 
 
 # scan history page
