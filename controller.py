@@ -42,6 +42,7 @@ class Controller:
             risk_category=risk_category or "N/A"
         )
         
+        
         # placeholder threat info
         self.db_manager.add_threat_info(
             
@@ -123,7 +124,9 @@ class Controller:
         
         # get file extension from path
         # gets the last item of filepath and converts to lowercase
-        file_extension = os.path.splitext(file_path)[-1].lower()
+        file_name = os.path.basename(file_path).strip()  # Strip any leading/trailing whitespace
+        _, file_extension = os.path.splitext(file_name)  # Split the file name and extension
+        file_extension = file_extension.lower()  # Convert to lowercase for consistency
 
         # list of executable file extensions
         executable_extensions = [
@@ -177,6 +180,24 @@ class Controller:
             reason_for_flag = result["reason_for_flag"]
             
             risk_category = result["risk_category"]
+
+        
+        
+        # check if file is executable
+        exec_result = self.executable_file_checker(file_path)
+        
+        # if executable finds an issue
+        if exec_result:
+            
+            # update data with results
+            status = exec_result["status"]
+            
+            risk_level = exec_result["risk_level"]
+            
+            reason_for_flag = exec_result["reason_for_flag"]
+            
+            risk_category = exec_result["risk_category"]
+
 
 
         # return results
