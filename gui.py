@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinterdnd2 import TkinterDnD, DND_FILES
 from PIL import Image, ImageTk
+from controller import Controller
 
 
 # tkinter object
@@ -127,62 +128,83 @@ def show_page(page):
         scanning_image_label.place_forget()
 
 
-# function to handle file upload
+# function to process the file from gui
+#   from drag and drop, or button click
+# done for modularity purposes
+def process_file_gui(file_path):
+    
+    # if file path is valid
+    if os.path.isfile(file_path):
+        
+        try:
+            # create instance of controller class to manage file processing logic
+            controller = Controller()
+            
+            # call process_file function from controller
+            controller.process_file(file_path)
+            
+            # close controller for resource management
+            controller.close()
+            
+            # extract file name from full file path
+            file_name = os.path.basename(file_path)
+            
+            # update label with file name
+            scanning_file_name_label.config(text=f"Selected file: {file_name}")
+            
+            # show scanning page
+            scanning_page.tkraise()
+            
+            # simulate scanning with 2 second delay
+            # switches to scan report page
+            root.after(2000, lambda: show_page(scan_report_page))
+            
+        # handle errors during file processing
+        except Exception as e:
+            
+            # display error message
+            scanning_file_name_label.config(text=f"Error processing file: {e}")
+    
+    # if file path invalid
+    else:
+        
+        # display error message
+        scanning_file_name_label.config(text="Invalid file dropped")
+
+
+
+# function to handle file upload via button
 def upload_file():
     
     # open file dialog
+    # get full file path
     file_path = filedialog.askopenfilename()
     
-    # if a file is selected
+    # clean file path
+    file_path = file_path.strip()
+
+    # if a file path is selected
     if file_path:
         
-        # get name of file
-        file_name = os.path.basename(file_path)
+        # process the file
+        process_file_gui(file_path)
         
-        # display file name on scanning page
-        scanning_file_name_label.config(text=f"Selected file: {file_name}")
-        
-        # hide scan_files_page
-        scan_files_page.lower()
-        
-        # show scanning page
-        scanning_page.tkraise()
-        
-        # function something like
-        # scan_file()
-        # then within this function it would be like
-        # generate_report()
-        
-        # as a temporary instead of file scanning alg
-        root.after(3000, lambda: show_page(scan_report_page))
-        
+    # if no file is selected
     else:
-        scanning_file_name_label.config(text="No file selected")
         
+        # display no file selected message
+        scanning_file_name_label.config(text="No file selected")
 
+
+
+# function to handle file upload via drag and drop
 def on_drop(event):
     
-    file_path = event.data
+    # clean file path
+    file_path = event.data.strip()
     
-    # get name of file
-    file_name = os.path.basename(file_path)
-        
-    # display file name on scanning page
-    scanning_file_name_label.config(text=f"Selected file: {file_name}")
-        
-    # hide scan_files_page
-    scan_files_page.lower()
-        
-    # show scanning page
-    scanning_page.tkraise()
-        
-    # function something like
-    # scan_file()
-    # then within this function it would be like
-    # generate_report()
-        
-    # as a temporary instead of file scanning alg
-    root.after(3000, lambda: show_page(scan_report_page))
+    # process the file
+    process_file_gui(file_path)
 
 
 
