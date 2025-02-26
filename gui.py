@@ -182,6 +182,9 @@ def upload_file():
     
     # clean file path
     file_path = file_path.strip()
+    
+     # remove in future
+    print(f"Selected file: {file_path}")
 
     # if a file path is selected
     if file_path:
@@ -202,6 +205,9 @@ def on_drop(event):
     
     # clean file path
     file_path = event.data.strip()
+    
+     # remove in future
+    print(f"Selected file: {file_path}")
     
     # process the file
     process_file_gui(file_path)
