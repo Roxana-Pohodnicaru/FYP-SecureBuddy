@@ -5,6 +5,11 @@ from tkinter import filedialog
 from tkinterdnd2 import TkinterDnD, DND_FILES
 from PIL import Image, ImageTk
 from controller import Controller
+from functools import partial
+from database import DatabaseManager
+
+
+db_manager = DatabaseManager()
 
 
 # tkinter object
@@ -379,6 +384,7 @@ prevention_tips_dummy_button = tk.Button(scan_report_page, text="more info", fon
 prevention_tips_dummy_button.place(x=1150, y=500, height=50, width=90)
 
 
+
 # scan history page
 scan_history_page = tk.Frame(root, bg="white", width=1980, height=1200)
 scan_history_page.place(x=0, y=0)
@@ -388,20 +394,204 @@ scan_history_header = "Scan History"
 scan_history_header_label = tk.Label(scan_history_page, text=scan_history_header, font=("Arial", 20))
 scan_history_header_label.place(x=575, y=50)
 
-# placeholder text of previous scans
-# name
-scan_history_scan1 = "Scan 1"
-scan_history_scan1_label = tk.Label(scan_history_page, text=scan_history_scan1, font=("Arial", 14))
-scan_history_scan1_label.place(x=200, y=200)
 
-# date
-scan_history_scan1_date = "10/11/2024"
-scan_history_scan1_date_label = tk.Label(scan_history_page, text=scan_history_scan1_date, font=("Arial", 14))
-scan_history_scan1_date_label.place(x=600, y=200)
+# create canvas for scrollable scan rows
+canvas = tk.Canvas(scan_history_page, bg="white", width=1500, height=800)
+canvas.place(x=200, y=150)
 
-# view scan button placeholder
-view_scan_button = tk.Button(scan_history_page, text="View Scan", font=("Arial", 14), command=print("placeholder"))
-view_scan_button.place(x=1000, y=190)
+# vertical scrollbar
+scrollbar = tk.Scrollbar(scan_history_page, orient="vertical", command=canvas.yview)
+scrollbar.place(x=1700, y=150, height=800)
+
+# create frame inside canvas to hold rows
+scan_rows_frame = tk.Frame(canvas, bg="white")
+
+# add frame to canvas as window
+canvas.create_window((0, 0), window=scan_rows_frame, anchor="nw")
+
+# configure canvas to work with vertical scrollbar
+canvas.configure(yscrollcommand=scrollbar.set)
+
+
+# function to update scrollable region of canvas when content changes
+def update_scroll_region(event=None):
+    
+    # update scroll region to catch all child widgets
+    canvas.configure(scrollregion=canvas.bbox("all"))
+    
+    
+# bind resizing of scan_rows_frame to scroll region update function
+scan_rows_frame.bind("<Configure>", update_scroll_region)
+
+
+# function to handle scroll event using mouse wheel
+def _on_mouse_wheel(event):
+    
+    # scroll canvas by 10 units when mouse wheel is moved
+    canvas.yview_scroll(-1 * (event.delta // 120), "units")
+    
+    
+# bind mouse wheel event to canvas
+canvas.bind_all("<MouseWheel>", _on_mouse_wheel)
+
+
+# function to populate scan history dynamically from db
+def populate_scan_history():
+    
+    # clear any existing rows in scan_rows_frame
+    for widget in scan_rows_frame.winfo_children():
+        widget.destroy()
+
+    # fetch scan history from db
+    scan_history = db_manager.get_scan_history()
+
+    # loop through scan history
+    # add rows for each entry
+    for index, (scan_id, file_name, scan_date) in enumerate(scan_history):
+        
+        # file name
+        file_name_label = tk.Label(scan_rows_frame, text=file_name, font=("Arial", 14), bg="white")
+        file_name_label.grid(row=index, column=0, padx=10, pady=5)
+
+        # scan date
+        scan_date_label = tk.Label(scan_rows_frame, text=scan_date, font=("Arial", 14), bg="white")
+        scan_date_label.grid(row=index, column=1, padx=10, pady=5)
+
+        # view scan button
+        view_button = tk.Button(
+            scan_rows_frame,
+            text="View Scan",
+            font=("Arial", 14),
+            
+            # using scan id to send to button
+            command=partial(view_scan_details, scan_id)
+        )
+        
+        # placing in grid layout
+        view_button.grid(row=index, column=2, padx=10, pady=5)
+
+
+# function to display details of specific scan in new page
+def view_scan_details(scan_id):
+    
+    # fetch scan details from db for given scan id
+    scan_details = db_manager.get_scan_details(scan_id)
+    scanned_file_info = db_manager.get_scanned_file_info(scan_id)
+    threat_info = db_manager.get_threat_info(scan_id)
+
+    # create new page dynamically
+    details_page = tk.Frame(root, bg="white")
+    details_page.place(x=0, y=0, relwidth=1, relheight=1)
+
+    # header
+    header_label = tk.Label(details_page, text="Scan Details", font=("Arial", 24), bg="white")
+    header_label.pack(pady=20)
+
+    # display scanned file info
+    if scanned_file_info:
+        
+        # unpack info
+        file_name, scan_date, status, risk_level = scanned_file_info
+        
+        # display info in label
+        scanned_file_label = tk.Label(
+            
+            details_page, 
+            
+            text=f"File Name: {file_name}\nScan Date: {scan_date}\nStatus: {status}\nRisk Level: {risk_level}",
+            
+            font=("Arial", 16), bg="white", justify="left"
+        )
+    
+        # padding
+        scanned_file_label.pack(pady=10)
+        
+    else:
+        
+        # if no info available, show message
+        no_file_info_label = tk.Label(
+            
+            details_page, text="No scanned file information available.", font=("Arial", 16), bg="white"
+        )
+        
+        # padding
+        no_file_info_label.pack(pady=10)
+
+    # display scan details
+    if scan_details:
+        
+        # display each reason and risk category
+        for reason, risk_category in scan_details:
+            
+            # display in label
+            detail_label = tk.Label(
+                
+                details_page, 
+                
+                text=f"Reason: {reason}, Risk: {risk_category}",
+                
+                font=("Arial", 16), bg="white"
+            )
+            
+            # padding
+            detail_label.pack(pady=5)
+            
+    else:
+        
+        # message if no scan details available
+        no_details_label = tk.Label(
+            
+            details_page, text="No scan details available.", font=("Arial", 16), bg="white"
+        )
+        
+        # padding
+        no_details_label.pack(pady=10)
+
+    # display threat info
+    if threat_info:
+        
+        # unpack info
+        what_happens_if_run, prevention_tips = threat_info
+        
+        # display info in label
+        threat_info_label = tk.Label(
+            
+            details_page, 
+            
+            text=f"What Happens If Run:\n{what_happens_if_run}\n\nPrevention Tips:\n{prevention_tips}",
+            
+            font=("Arial", 16), bg="white", justify="left"
+        )
+        
+        # padding
+        threat_info_label.pack(pady=10)
+        
+    else:
+        
+        # message if no info available
+        no_threat_info_label = tk.Label(
+            
+            details_page, text="No threat information available.", font=("Arial", 16), bg="white"
+        )
+        
+        # padding
+        no_threat_info_label.pack(pady=10)
+
+    # back button to go back to scan history page
+    back_button = tk.Button(
+        
+        details_page, text="Back", font=("Arial", 16),
+        
+        # destroy page for memory efficiency
+        command=lambda: details_page.destroy()
+    )
+    
+    # padding
+    back_button.pack(pady=20)
+
+
+# populate scan history with data from db when page is loaded
+populate_scan_history()
 
 
 # education page

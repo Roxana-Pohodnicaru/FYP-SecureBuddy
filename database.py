@@ -97,7 +97,7 @@ class DatabaseManager:
         self.connection.commit()
 
 
-
+    # inserting threat info in db
     def add_threat_info(self, scanned_file_id, what_happens_if_run, prevention_tips):
         
         # create cursor object to interact with the db
@@ -113,6 +113,82 @@ class DatabaseManager:
         
         # commit transaction
         self.connection.commit()
+
+ 
+    # get all scan records for scan history page
+    def get_scan_history(self):
+        
+        # create cursor object to interact with the db
+        cursor = self.connection.cursor()
+        
+        # select data from scanned file table
+        cursor.execute('''
+            SELECT scanned_file_id, file_name, scan_date 
+            FROM ScannedFile
+            ORDER BY scan_date DESC
+        ''')
+        
+        # fetch rows returned by query
+        # return as list of tuples
+        return cursor.fetchall()
+    
+
+    # get specific scan details for given scan id
+    # from scan details table
+    def get_scan_details(self, scan_id):
+        
+        # create cursor object to interact with the db
+        cursor = self.connection.cursor()
+        
+        # select data from scan details table
+        cursor.execute('''
+            SELECT reason_for_flag, risk_category
+            FROM ScanDetails
+            WHERE scanned_file_id = ?
+        ''', (scan_id,))
+        
+        # fetch rows returned by query
+        # return as list of tuples
+        return cursor.fetchall()
+
+
+    # get specific scan details for given scan id
+    # from scanned file table
+    def get_scanned_file_info(self, scan_id):
+        
+        # create cursor object to interact with the db
+        cursor = self.connection.cursor()
+        
+        # select data from table
+        cursor.execute('''
+            SELECT file_name, scan_date, status, risk_level
+            FROM ScannedFile
+            WHERE scanned_file_id = ?
+        ''', (scan_id,))
+        
+        # fetch rows returned by query
+        # return as list of tuples
+        return cursor.fetchone()
+    
+    
+    
+    # get specific scan details for given scan id
+    # from threat info table
+    def get_threat_info(self, scan_id):
+        
+        # create cursor object to interact with the db
+        cursor = self.connection.cursor()
+        
+        # select data from table
+        cursor.execute('''
+            SELECT what_happens_if_run, prevention_tips
+            FROM ThreatInfo
+            WHERE scanned_file_id = ?
+        ''', (scan_id,))
+        
+        # fetch rows returned by query
+        # return as list of tuples
+        return cursor.fetchone()
 
 
     # close connection to db
