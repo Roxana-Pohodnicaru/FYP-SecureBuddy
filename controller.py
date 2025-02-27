@@ -405,3 +405,4 @@ class Controller:
     def close(self):
         
         self.db_manager.close()
+        
