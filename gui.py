@@ -609,6 +609,25 @@ education_malware_button = tk.Button(education_page, text="Malware", font=("Aria
 # placing button
 education_malware_button.place(x=100, y=250, width=300, height=250)
 
+
+
+
+
+# # malware types page
+# malware_types = tk.Frame(root, bg="white", width=1980, height=1200)
+# malware_types.place(x=0, y=0)
+
+# # education header text
+# education_header = "Categories of Malware"
+# education_header_label = tk.Label(education_page, text=education_header, font=("Arial", 20))
+# education_header_label.place(x=575, y=50)
+
+# # need button
+
+
+
+
+
 # file types button
 education_file_types_button = tk.Button(education_page, text="File Types", font=("Arial", 16), command=lambda: show_page(file_types_page))
 # placing button

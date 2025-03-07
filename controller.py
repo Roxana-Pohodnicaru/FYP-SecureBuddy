@@ -1,5 +1,7 @@
 import os
 import zipfile
+import re
+import math
 from datetime import datetime
 from database import DatabaseManager
 from oletools.olevba import VBA_Parser
@@ -374,7 +376,16 @@ class Controller:
             
             self.office_file_checker,
             
-            self.is_zip_file
+            self.is_zip_file,
+            
+            self.credential_stealer_checker,
+            
+            self.remote_access_tool_checker,
+            
+            self.file_header_signature_checker,
+            
+            self.detect_obfuscated_entropy
+            
             
         ]
 
@@ -401,8 +412,413 @@ class Controller:
 
 
 
+    # method to process signature files and add them to db
+    def process_signature_files(self, base_dir="malicious_file_signatures", batch_size=1000):
+        
+        # iterate through each folder
+        for folder in ["MD5", "SHA1", "SHA256"]:
+            
+            # construct full path for current folder by combining base dir and folder name
+            folder_path = os.path.join(base_dir, folder)
+            
+            # using folder name as signature type
+            signature_type = folder
+
+            # iterate through each file in current folder
+            for file_name in os.listdir(folder_path):
+                
+                # construct full path for current file by combining folder path and file name
+                file_path = os.path.join(folder_path, file_name)
+                
+                # log file currently being processed
+                print(f"Processing file: {file_path}")
+
+                # buffer for batch inserts
+                batch = []
+                
+                # open current file for reading
+                with open(file_path, "r") as file:
+                    
+                    # read file line by line
+                    for line in file:
+                        
+                        # remove any whitespace
+                        signature_value = line.strip()
+                        
+                        # add info to batch
+                        batch.append(
+                            {
+                                "signature_type": signature_type,
+                                
+                                "signature_value": signature_value,
+                                
+                                "threat_level": "high",
+                            }
+                        )
+                        
+                        # if batch size is reached
+                        if len(batch) >= batch_size:
+                            
+                            # insert into db
+                            self.db_manager.add_malware_signatures(batch)
+                            
+                            # clear batch
+                            batch = []
+
+                # insert remaining signatures in last batch
+                if batch:
+                    
+                    self.db_manager.add_malware_signatures(batch)
+
+
+    # method to detect spyware such as keyloggers or credential stealers
+    # checks for keywords with input capture, credential storage, data exfiltration (email, URLs), packet sniffing, registry manipulation
+    def credential_stealer_checker(self, file_path):
+        
+        suspicious_keywords = [
+            
+            # keyloggers and input captures
+            "SetWindowsHookEx", "GetAsyncKeyState", "GetKeyState", "SendInput", "GetForegroundWindow", "GetWindowText", "Clipboard.GetText",
+            
+            # credentials storage
+            "NetUserEnum", "NetUserGetInfo", "CredentialCache.DefaultNetworkCredentials", "PasswordVault", "CredentialManager",
+            
+            # data exfiltration
+            "HttpWebRequest", "FtpWebRequest", "UploadString", "UploadData", "WebClient.Upload",
+            
+            # HTTPS communication
+            "POST", "GET", "PUT", "DELETE", "multipart/form-data", "Content-Disposition", "application/x-www-form-urlencoded", "api_key", "token", "authorization", "curl",  "wget",
+            
+            # DNS
+            "gethostbyname", "DnsQuery", "nslookup", "Base64 over DNS",
+            
+            # ftp
+            # remote access
+            "ftp://", "SFTP", "WinSCP", "libcurl", "scp",
+            
+            # cloud services
+            "AWS_SECRET_ACCESS_KEY", "Google Cloud API",
+            
+            # networks and packet sniffing
+            "pcap_open_live", "pcap_loop", "WinPcap", "raw socket", "WSARecv", "recvfrom", "socket.connect",
+            
+            # manipulation of registry
+            "RunOnce", "RunServices", "RunServicesOnce", "AutoRun", "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            
+            # emails
+            "SMTPClient", "mail.smtp.host", "mail.smtp.auth", "mailto", "SMTP.Send", "MailMessage", "System.Net.Mail",
+            
+            # suspicious keywords
+            "pwd", "credential", "secret", "token", "hash", "password", "login"
+        ]
+        
+        # regular expression for detecting URLs
+        url_pattern = r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+
+
+        try:
+
+            # open file in binary read mode to prevent execution
+            with open(file_path, "rb") as file:
+                
+                # decode
+                content = file.read().decode(errors="ignore")
+
+                # check for suspicious keywords
+                for keyword in suspicious_keywords:
+                    
+                    # if keyword is found
+                    if keyword in content:
+                        
+                        # mark file unsafe
+                        # store in db
+                        return {
+                            
+                            "status": "dangerous",
+                            
+                            "risk_level": "high",
+                            
+                            "reason_for_flag": f"Detected suspicious keyword: {keyword}",
+                            
+                            "risk_category": "Credential Stealer",
+                        }
+                        
+                # check for URLs with regex
+                urls_found = re.findall(url_pattern, content)
+                
+                # if url is found
+                if urls_found:
+                    
+                    # mark file unsafe
+                    # store in db
+                    return {
+                        "status": "dangerous",
+                        
+                        "risk_level": "high",
+                        
+                        "reason_for_flag": f"Detected suspicious URLs: {', '.join(urls_found[:5])}",
+                        
+                        "risk_category": "Credential Stealer",
+                    }
+
+        # log error
+        except Exception as e:
+            
+            print(f"Error {e}")
+
+        # no issues found
+        return None
+
+
+    # checks file for keywords related to remote access tools, backdoors, reverse shells
+    def remote_access_tool_checker(self, file_path):
+        
+        
+        rat_keywords = [
+            
+            "RAT", "backdoor", "remote control", "netcat", "nc", "ReverseShell", "bind shell",
+            
+            "RemoteAccess", "netcat", "Telnet", "VNC", "SSH", "sockets", "bind", "exec", 
+            
+            "CreateObject", "Shell", "WinRM", "Powershell", "Remote Desktop", "ftps", "sftp",
+             
+            "upload", "download", "cmd", "powershell", "wget", "curl", "TCP", "UDP", "open port", 
+            
+            "listener", "command_and_control", "shellcode", "bind tcp", "reverse shell"
+        ]
+        
+        
+        try:
+            
+            # open file in binary read move to prevent execution
+            with open(file_path, "rb") as file:
+                
+                # read file content and decode
+                content = file.read().decode(errors="ignore")
+
+                # iterate through list of keywords
+                for keyword in rat_keywords:
+                    
+                    # case insensitive match for keyword
+                    if keyword.lower() in content.lower():
+                        
+                        # mark file as unsafe
+                        # store in db
+                        return {
+                            
+                            "status": "dangerous",
+                            
+                            "risk_level": "high",
+                            
+                            "reason_for_flag": f"Detected RAT-related keyword: {keyword}",
+                            
+                            "risk_category": "Remote Access Tool (RAT)"
+                        }
+            
+        # log error
+        except Exception as e:
+            
+            print(f"Error while checking for RAT: {e}")
+        
+        return None
+    
+    
+    # extracts hex of file signature from first few bytes of file
+    def extract_file_signature(self, file_path, num_bytes=16):
+        
+        try:
+            
+            # debugging
+            print(f"Trying to open file at {file_path}")
+            
+            # open file in binary read mode to prevent execution
+            with open(file_path, "rb") as file:
+                
+                # read the specified number of bytes
+                # convert to hex format
+                signature = file.read(num_bytes).hex()
+                
+                # debugging
+                print(f"Extracted signature: {signature}")
+                
+                # return extracted file signature
+                return signature
+            
+        # log error
+        except Exception as e:
+            
+            print(f"Error extracting file signature: {e}")
+            
+            return None
+
+
+    # check file header against a db of known malware signatures
+    # if match found, mark file as unsafe
+    def file_header_signature_checker(self, file_path):
+        
+        try:
+            
+            # extract file signature header
+            signature = self.extract_file_signature(file_path)
+            
+            # if signature extraction fails
+            if not signature:
+                
+                # log error
+                print("Error, no signature extracted, skipping file")
+                
+                return None
+
+            # debugging
+            print(f"Extracted signature to check: {signature}")
+
+            # check extracted signature against db
+            result = self.db_manager.check_file_signature(signature)
+            
+            # debugging
+            print("Database check result:", result)
+
+            # if signature matches
+            # flag file as unsafe
+            if result:
+                
+                # debugging
+                print(f"File header matches known malware signature: {signature}")
+                
+                # store in db
+                return {
+                    
+                    "status": "dangerous",
+                    
+                    "risk_level": "high",
+                    
+                    "reason_for_flag": f"File header matches known malware signature: {signature}.",
+                    
+                    "risk_category": "Malware Signature Match"
+                    
+                }
+            
+            #
+            else:
+                
+                # no match found
+                print(f"File header {signature}. No match found")
+            
+            # file not flagged
+            return None
+
+        # log error
+        except Exception as e:
+            
+            print(f"An error occurred: {e}")
+            
+            return None
+
+
+    # calculate entropy of file (randomness)
+    # uses Shannon entropy
+    # higher entropy indicates obfustication or encrypted content
+    def calculate_entropy(self, data):
+        
+        # initialise list to store frequency of each byte
+        byte_freq = [0] * 256
+        
+        # iterate through each byte in data
+        for byte in data:
+            
+            # update frequency
+            byte_freq[byte] += 1
+        
+        # initialise entropy value
+        entropy = 0
+        
+        # calculate entropy based on byte frequency
+        for freq in byte_freq:
+            
+            # ignore bytes with zero frequency
+            if freq > 0:
+                
+                # calculate probability of byte
+                prob = freq / len(data)
+                
+                # update entropy using log
+                entropy -= prob * math.log(prob, 2)
+                
+        # return calculated entropy
+        return entropy
+
+
+    # detect obfustication based on entropy
+    def detect_obfuscated_entropy(self, file_path, threshold=7.5):
+        
+        try:
+            
+            # open file in binary read mode to prevent execution
+            with open(file_path, 'rb') as file:
+                
+                # read file as bytes
+                content = file.read()
+
+                # calculate entropy of file
+                entropy = self.calculate_entropy(content)
+
+                # debugging
+                print(f"Entropy of file '{file_path}': {entropy:.2f}")
+
+                # if entropy exceeds threshold
+                # mark file as unsafe
+                if entropy > threshold:
+                    
+                    # store in db
+                    return {
+                        
+                        "status": "dangerous",
+                        
+                        "risk_level": "high",
+                        
+                        "reason_for_flag": f"File has high entropy ({entropy:.2f}), indicating possible obfuscation.",
+                        
+                        "risk_category": "Obfuscated Code"
+                        
+                    }
+
+        # log error
+        except Exception as e:
+            
+            print(f"Error occurred while processing the file: {e}")
+        
+        return None
+
+                        
     # close db connection
     def close(self):
         
         self.db_manager.close()
         
+        
+        
+        
+# for inserting malware header signatures in db  
+# if __name__ == "__main__":
+
+#     # initialise controller
+#     controller = Controller()
+    
+#     try:
+        
+#         # process malware signature
+#         controller.process_signature_files()
+
+#         # debugging
+#         print("All malware signatures have been successfully added to the database")
+
+#     # log error
+#     except Exception as e:
+        
+#         print(f"An error occurred while processing the files: {e}")
+
+
+#     finally:
+        
+#         # close db connection
+#         controller.close()

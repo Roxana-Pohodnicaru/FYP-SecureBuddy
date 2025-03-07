@@ -53,6 +53,16 @@ class DatabaseManager:
                 FOREIGN KEY (scanned_file_id) REFERENCES ScannedFile(scanned_file_id)
             )
         ''')
+        
+        # create MalwareSignatures table if it does not exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS MalwareSignatures (
+                signature_id INTEGER PRIMARY KEY,
+                signature_type TEXT CHECK(signature_type IN ('MD5', 'SHA1', 'SHA256')) NOT NULL,
+                signature_value TEXT NOT NULL,
+                threat_level TEXT CHECK(threat_level IN ('low', 'medium', 'high'))
+            )
+        ''')
 
         # commit transaction to save changes
         self.connection.commit()
@@ -189,15 +199,111 @@ class DatabaseManager:
         # fetch rows returned by query
         # return as list of tuples
         return cursor.fetchone()
+    
+    # add malware signatures to db
+    def add_malware_signatures(self, signatures):
+        
+        # create cursor object to interact with the db
+        cursor = self.connection.cursor()
+        
+        # insert multiple malware signatures into table as batches
+        cursor.executemany('''
+            INSERT INTO MalwareSignatures (signature_type, signature_value, threat_level)
+            VALUES (:signature_type, :signature_value, :threat_level)
+        ''', signatures)
+        
+        # commit transaction
+        self.connection.commit()
 
+
+    # check if file signature matches known malware signatures in db
+    # handles MD5, SHA1, SHA256
+    def check_file_signature(self, signature_value):
+        
+        # create cursor object to interact with the db
+        cursor = self.connection.cursor()
+
+        # full match query
+        cursor.execute('''
+            SELECT * FROM MalwareSignatures
+            WHERE signature_value = ?
+        ''', (signature_value,))
+
+        # fetch result of full match query
+        full_match = cursor.fetchone()
+
+        # if full match found
+        if full_match:
+            
+            # debugging
+            print("Match found: ", full_match)
+            
+            # return match
+            return full_match
+
+
+        # if no full match found
+        # check for partial matches
+        # determine length needed based on signature type
+        # MD5 32 characters
+        # SHA1 40 characters
+        # SHA256 64 characters
+        
+        # MD5 length
+        if len(signature_value) == 32:
+            
+            # match first 8 chars
+            partial_length = 8
+            
+        # SHA1 length
+        elif len(signature_value) == 40:
+            
+            # match first 8 chars
+            partial_length = 8
+            
+        # SHA256
+        elif len(signature_value) == 64:
+            
+            # match first 16 chars
+            partial_length = 16
+            
+        else:
+            
+            # default length for unknown sigantures
+            partial_length = 8
+
+        # Now check for partial matches using the determined length
+        
+        # perform match check query
+        cursor.execute('''
+            SELECT * FROM MalwareSignatures
+            WHERE signature_value LIKE ?
+        ''', (f'{signature_value[:partial_length]}%',))
+
+        # fetch result of query
+        partial_match = cursor.fetchone()
+
+        # if partial match found
+        if partial_match:
+            
+            # debugging
+            print(f"Partial match found for signature with length {partial_length}: ", partial_match)
+            
+            # return matched value
+            return partial_match
+
+        # no match found
+        # debugging
+        print("No match found for file header.")
+        
+        return None
+    
 
     # close connection to db
     def close(self):
         
         # closing connection
         self.connection.close()
-
-
 
 
 # main
