@@ -372,11 +372,11 @@ class Controller:
             
             self.double_extension_checker,
             
-            self.executable_file_checker,
+            #self.executable_file_checker,
             
             self.office_file_checker,
             
-            self.is_zip_file,
+            #self.is_zip_file,
             
             self.credential_stealer_checker,
             
