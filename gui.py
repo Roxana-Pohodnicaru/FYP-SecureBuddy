@@ -1036,7 +1036,7 @@ def view_scan_details(scan_id):
             reason_result_label.place(x=210, y=y_offset)
             
             # padding
-            y_offset += 80
+            y_offset += 50
 
             # label header
             risk_category_label = tk.Label(
