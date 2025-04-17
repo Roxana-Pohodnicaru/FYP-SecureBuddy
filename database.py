@@ -1,5 +1,3 @@
-# TODO: need to automatically run db file from start
-
 import sqlite3
 
 
@@ -21,6 +19,7 @@ class DatabaseManager:
         # create cursor object to interact with the db
         cursor = self.connection.cursor()
 
+
         # create ScannedFile table if it does not exist
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS ScannedFile (
@@ -31,6 +30,7 @@ class DatabaseManager:
                 risk_level TEXT CHECK(risk_level IN ('high', 'medium', 'low'))
             )
         ''')
+
 
         # create ScanDetails table if it does not exist
         cursor.execute('''
@@ -43,16 +43,6 @@ class DatabaseManager:
             )
         ''')
 
-        # create ThreatInfo table if it does not exist
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS ThreatInfo (
-                threat_info_id INTEGER PRIMARY KEY,
-                scanned_file_id INTEGER,
-                what_happens_if_run TEXT NOT NULL,
-                prevention_tips TEXT NOT NULL,
-                FOREIGN KEY (scanned_file_id) REFERENCES ScannedFile(scanned_file_id)
-            )
-        ''')
         
         # create MalwareSignatures table if it does not exist
         cursor.execute('''
@@ -64,19 +54,123 @@ class DatabaseManager:
             )
         ''')
 
+        # create EducationalProgress table if it does not exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS EducationalProgress (
+            progress_id INTEGER PRIMARY KEY,
+            topic_name TEXT NOT NULL UNIQUE,
+            read_completed BOOLEAN NOT NULL DEFAULT 0,
+            quiz_passed BOOLEAN NOT NULL DEFAULT 0
+        )
+        ''')
+        
         # commit transaction to save changes
         self.connection.commit()
+        
+        
+    # prepopulate topics in EducationalProgress table
+    def prepopulate_topics(self, topics):
+        
+        # create cursor object to interact with db
+        cursor = self.connection.cursor()
+        
+        # iterate through the list of topics
+        for topic in topics:
+            
+            # insert each topic into EducationalProgress table
+            # if does not already exist
+            cursor.execute('''
+                INSERT OR IGNORE INTO EducationalProgress (topic_name)
+                VALUES (?)
+            ''', (topic,))
+            
+        # commit transaction
+        self.connection.commit()
+        
+    
+    # mark a specific topic as read in EducationalProgress table
+    def mark_topic_as_read(self, topic_name):
+        
+        # create cursor object to interact with db
+        cursor = self.connection.cursor()
+        
+        # update read_completed status to 1 for specified topic
+        cursor.execute('''
+            UPDATE EducationalProgress
+            SET read_completed = 1
+            WHERE topic_name = ?
+        ''', (topic_name,))
+        
+        # commit transaction
+        self.connection.commit()
+        
+        
+    # get topic names from EducationalProgress table which marked as read
+    def get_read_topics(self):
+        
+        # create cursor object to interact with db
+        cursor = self.connection.cursor()
+        
+        # select all topic names that are read
+        cursor.execute('''
+            SELECT topic_name
+            FROM EducationalProgress
+            WHERE read_completed = 1
+        ''')
+        
+        # fetch all first column rows and put in a set
+        read_topics = {row[0] for row in cursor.fetchall()}
+        
+        # return set of read topic names
+        return read_topics
+        
+    
+    # mark quiz as passed for specific topic in EducationalProgress table
+    def mark_quiz_as_passed(self, topic_name):
+        
+        # create cursor object to interact with db
+        cursor = self.connection.cursor()
+        
+        # update quiz_completed status to 1 for specified topic
+        cursor.execute('''
+            UPDATE EducationalProgress
+            SET quiz_passed = 1
+            WHERE topic_name = ?
+        ''', (topic_name,))
+        
+        # commit transaction
+        self.connection.commit()
+        
+        
+    # get topic names from EducationalProgress table which marked as quiz passed
+    def get_passed_quizzes(self):
+        
+        # create cursor object to interact with db
+        cursor = self.connection.cursor()
+        
+        # select all topic names where quizzes are passed
+        cursor.execute('''
+            SELECT topic_name
+            FROM EducationalProgress
+            WHERE quiz_passed = 1
+        ''')
+        
+        # fetch all first column rows and put in a set
+        passed_quizzes = {row[0] for row in cursor.fetchall()}
+        
+        # return set of passed quiz topic names
+        return passed_quizzes
 
 
     # add file details to ScannedFile table
+    
     def add_scanned_file(self, file_name, scan_date, status, risk_level):
         
-        # create cursor object to interact with the db
+        # create cursor object to interact with db
         cursor = self.connection.cursor()
         
         # inserting data into table
         # data is in tuple format
-        # using placeholders (?) in order to prevent SQL injections
         cursor.execute('''
             INSERT INTO ScannedFile (file_name, scan_date, status, risk_level)
             VALUES (?, ?, ?, ?)
@@ -92,12 +186,11 @@ class DatabaseManager:
     # add file details to ScanDetails table
     def add_scan_detail(self, scanned_file_id, reason_for_flag, risk_category):
         
-        # create cursor object to interact with the db
+        # create cursor object to interact with db
         cursor = self.connection.cursor()
         
         # inserting data into table
         # data is in tuple format
-        # using placeholders (?) in order to prevent SQL injections
         cursor.execute('''
             INSERT INTO ScanDetails (scanned_file_id, reason_for_flag, risk_category)
             VALUES (?, ?, ?)
@@ -106,29 +199,11 @@ class DatabaseManager:
         # commit transaction
         self.connection.commit()
 
-
-    # inserting threat info in db
-    def add_threat_info(self, scanned_file_id, what_happens_if_run, prevention_tips):
-        
-        # create cursor object to interact with the db
-        cursor = self.connection.cursor()
-        
-        # inserting data into table
-        # data is in tuple format
-        # using placeholders (?) in order to prevent SQL injections
-        cursor.execute('''
-            INSERT INTO ThreatInfo (scanned_file_id, what_happens_if_run, prevention_tips)
-            VALUES (?, ?, ?)
-        ''', (scanned_file_id, what_happens_if_run, prevention_tips))
-        
-        # commit transaction
-        self.connection.commit()
-
  
     # get all scan records for scan history page
     def get_scan_history(self):
         
-        # create cursor object to interact with the db
+        # create cursor object to interact with db
         cursor = self.connection.cursor()
         
         # select data from scanned file table
@@ -147,7 +222,7 @@ class DatabaseManager:
     # from scan details table
     def get_scan_details(self, scan_id):
         
-        # create cursor object to interact with the db
+        # create cursor object to interact with db
         cursor = self.connection.cursor()
         
         # select data from scan details table
@@ -166,7 +241,7 @@ class DatabaseManager:
     # from scanned file table
     def get_scanned_file_info(self, scan_id):
         
-        # create cursor object to interact with the db
+        # create cursor object to interact with db
         cursor = self.connection.cursor()
         
         # select data from table
@@ -179,31 +254,12 @@ class DatabaseManager:
         # fetch rows returned by query
         # return as list of tuples
         return cursor.fetchone()
-    
-    
-    
-    # get specific scan details for given scan id
-    # from threat info table
-    def get_threat_info(self, scan_id):
-        
-        # create cursor object to interact with the db
-        cursor = self.connection.cursor()
-        
-        # select data from table
-        cursor.execute('''
-            SELECT what_happens_if_run, prevention_tips
-            FROM ThreatInfo
-            WHERE scanned_file_id = ?
-        ''', (scan_id,))
-        
-        # fetch rows returned by query
-        # return as list of tuples
-        return cursor.fetchone()
-    
+
+   
     # add malware signatures to db
     def add_malware_signatures(self, signatures):
         
-        # create cursor object to interact with the db
+        # create cursor object to interact with db
         cursor = self.connection.cursor()
         
         # insert multiple malware signatures into table as batches
@@ -220,7 +276,7 @@ class DatabaseManager:
     # handles MD5, SHA1, SHA256
     def check_file_signature(self, signature_value):
         
-        # create cursor object to interact with the db
+        # create cursor object to interact with db
         cursor = self.connection.cursor()
 
         # full match query
@@ -286,16 +342,10 @@ class DatabaseManager:
         # if partial match found
         if partial_match:
             
-            # debugging
-            print(f"Partial match found for signature with length {partial_length}: ", partial_match)
-            
             # return matched value
             return partial_match
 
-        # no match found
-        # debugging
-        print("No match found for file header.")
-        
+        # no match found        
         return None
     
 
@@ -304,14 +354,21 @@ class DatabaseManager:
         
         # closing connection
         self.connection.close()
-
-
+        
+        
+        
 # main
 if __name__ == "__main__":
 
     # create instance of database manager class
     # initialize db and create tables
     db_manager = DatabaseManager()
+    
+    # define list of educational topics
+    topics = ["Executables", "File Spoofing", "Obfuscation", "Remote Access Control", "Viruses", "Credential Stealers", "Compressed Files", "Macros"]
+    
+    # prepopulate EducationalProgress table with topics
+    db_manager.prepopulate_topics(topics)
     
     # success message
     print("Database initialized and tables created successfully")

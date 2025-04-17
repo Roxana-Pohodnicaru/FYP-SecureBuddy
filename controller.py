@@ -36,6 +36,7 @@ class Controller:
             file_name, scan_date, status, risk_level
         )
 
+        # logging
         print(f"Scanned file ID returned: {scanned_file_id}")
 
         # save scan details to db
@@ -48,22 +49,129 @@ class Controller:
             risk_category=risk_category or "N/A"
         )
         
-        
-        # placeholder threat info
-        self.db_manager.add_threat_info(
-            
-            scanned_file_id, 
-            
-            what_happens_if_run="File may execute malicious scripts", 
-            
-            prevention_tips="Avoid downloading files from untrusted sources"
-        )
-
-        # logging for debugging
+        # logging
         print(f"File '{file_name}' processed successfully with ID: {scanned_file_id}")
 
+        # return scanned file id
+        return scanned_file_id
+
+
+    # fetch scan results and pass them to gui
+    def show_scan_results_controller(self, scanned_file_id, show_scan_results):
+    
+        # fetch scan data from db using scanned file id
+        scanned_file_info = self.db_manager.get_scanned_file_info(scanned_file_id)
+        scan_details = self.db_manager.get_scan_details(scanned_file_id)
+
+        # pass data to gui for rendering
+        show_scan_results(scanned_file_info, scan_details)
+
+
+    # fetch scan history from db and reformat dates
+    def fetch_scan_history(self):
+        
+        # fetch scan history from db
+        scan_history = self.db_manager.get_scan_history()
+
+        # convert scan date to YYYY-MM-DD HH:MM:SS
+        for i in range(len(scan_history)):
+            
+            # extract values from scan history tuple
+            scan_id, file_name, scan_date = scan_history[i]
+        
+            # convert date from DD MM YYYY HH:MM:SS to YYYY-MM-DD HH:MM:SS
+            formatted_date = datetime.strptime(scan_date, '%d %m %Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+            
+            # update scan history with formatted date
+            scan_history[i] = (scan_id, file_name, formatted_date)
+
+        # return updated scan history with formatted dates
+        return scan_history
+    
+    
+    # fetches both scan fetails and scanned file info for given scan ID
+    def get_scan_details_and_info(self, scan_id):
+    
+        # fetch scan data from db for given scan ID
+        scan_details = self.db_manager.get_scan_details(scan_id)
+        scanned_file_info = self.db_manager.get_scanned_file_info(scan_id)
+        
+        # return scan data
+        return scanned_file_info, scan_details
+    
+    
+    # fetches list of quizzes marked as passed from db
+    def get_passed_quizzes(self):
+        
+        # gets passed quizzes
+        return self.db_manager.get_passed_quizzes()
+    
+    
+    # fetches list of topics marked as read from the db
+    def get_read_topics(self):
+
+        # fetches read topics
+        return self.db_manager.get_read_topics()
+    
+    
+    # marks specific topic as read in db
+    def mark_topic_as_read(self, topic_name):
+        
+        # mark topic as read
+        self.db_manager.mark_topic_as_read(topic_name)
+        
+        
+    # marks a specific quiz as passed in db
+    def mark_quiz_as_passed(self, topic_name):
+        
+        # mark quiz topic as passed
+        self.db_manager.mark_quiz_as_passed(topic_name)
 
     
+    # calculates user score on quiz
+    # tracks incorrect answers
+    def get_quiz_results(self, questions, user_answers):
+        
+        # set score to 0
+        score = 0
+        
+        # list for incorrect questions
+        incorrect_questions = []
+        
+        # loop through user answers to check against correct answers
+        for i, user_answer in enumerate(user_answers):
+            
+            # get correct answer for current question
+            correct_answer = questions[i]["answer"]
+            
+            # check if user answer matches correct answer
+            if user_answer == correct_answer:
+                
+                # increment score
+                score += 1
+                
+            # if user answer is incorrect
+            # add question details to incorrect answer list
+            else:
+                
+                incorrect_questions.append({
+                    
+                    # question text
+                    "question": questions[i]["question"],
+                    
+                    # the correct answer option
+                    "correct_answer": questions[i]["options"][correct_answer],
+                    
+                    #  user selected answer
+                    # or no answer if user did not select an option
+                    "user_answer": questions[i]["options"][user_answer] if user_answer != -1 else "No answer selected"
+                    
+                })
+                
+        # return score and list of incorrect questions
+        return score, incorrect_questions
+
+
     # method to check for double extensions in the file name
     # checking file spoofing vulnerability
     def double_extension_checker(self, file_path):
@@ -74,7 +182,8 @@ class Controller:
         # split file name into parts seperated by dots
         parts = file_name.split('.')
 
-        # if there are more than 2 parts, means that there is an extra extension
+        # if there are more than 2 parts
+        # means that there is an extra extension
         if len(parts) > 2:
             
             # get actual extension
@@ -103,6 +212,18 @@ class Controller:
                 
                 ]
             
+            # define list of valid multi extensions 
+            # should not be flagged dangerous by this function
+            valid_multi_extensions = ['tar.gz', 'tar.xz', 'zip.gz']
+            
+            # check if current file has valid multi extension
+            if '.'.join(parts[-2:]).lower() in valid_multi_extensions:
+                
+                # valid multi extension
+                # not marked as issue by this function
+                return None
+        
+            
             # check if spoofed extension matches file types
             if spoofed_extension in file_extensions:
                 
@@ -111,11 +232,8 @@ class Controller:
                 return {
                     
                     "status": "dangerous",
-                    
                     "risk_level": "high",
-                    
                     "reason_for_flag": "File contains double extensions or more, indicating file spoofing",
-                    
                     "risk_category": "File Spoofing"
                 }
 
@@ -123,7 +241,6 @@ class Controller:
         return None
 
 
-    
     # method to check if file is an executable
     def executable_file_checker(self, file_path):
         
@@ -150,12 +267,9 @@ class Controller:
             return {
                 
                 "status": "dangerous",
-                
                 "risk_level": "high",
-                
                 "reason_for_flag": f"File has an executable extension, indicating possible malware program",
-                
-                "risk_category": "Executable File"
+                "risk_category": "Executables"
             }
 
         # if no executable extension, return None
@@ -174,9 +288,8 @@ class Controller:
         # convert file extension to lowercase
         file_extension = file_extension.lower()
         
-        # debugging
+        # logging
         print(f"Processing file: {file_name}, Extension: {file_extension}")
-        
         
         # list of file extensions for microsoft office files
         office_extensions = [
@@ -201,7 +314,7 @@ class Controller:
             
             # list of suspicious keywords used in malicious macros
             suspicious_content = [
-                       
+                
                         # common malicious script commands
                         "Shell", "CreateObject", "Execute", "Run", "Open", "Close", "Kill", "Terminate", "Delete", "Format", "WScript.Shell", "AppActivate", "Application.Run", "AutoOpen", "AutoClose", "Document_Open", "Workbook_Open", "Workbook_BeforeClose",
 
@@ -240,12 +353,10 @@ class Controller:
             # check if file contains VBA macros
             if vba_parser.detect_vba_macros():
                 
-                print("Macros detected")
-                
                 # extract macros from file
                 for macro_tuple in vba_parser.extract_macros():
                     
-                    # debugging
+                    # logging
                     print(f"Extracted Macro Tuple: {macro_tuple}")
                 
                     # iterate through each element in macro tuple
@@ -255,7 +366,6 @@ class Controller:
                         if not isinstance(element, str):
                             
                             continue
-                    
                     
                         # check each element if it contains any malicious commands
                         for keyword in suspicious_content:
@@ -269,76 +379,74 @@ class Controller:
                                 return {
                                     
                                     "status": "dangerous",
-                                    
                                     "risk_level": "high",
+                                    "reason_for_flag": f"Macros contain suspicious command: {keyword}",
+                                    "risk_category": "Macros"
                                     
-                                    "reason_for_flag": f"Macros contain suspicious command: {keyword}.",
-                                    
-                                    "risk_category": "Macro-based Threats"
-                                    
-                                }
-
+                                }                    
+        # catch error
         except Exception as e:
             
+            # logging
             print(f"Error: {e}")
            
-           
-    # method to analyse ZIP files based on their compression size
+        
+    # method to detect zip bombs based on file size and compression ratio
     def detect_zip_bombs(self, file_path, compression_ratio_threshold=1000, max_decompressed_size=10**9):
         
         try:
-            # open ZIP file in read mode
+            
+            # open zip file in read mode
             with zipfile.ZipFile(file_path, 'r') as zip_file:
                 
-                # calculate total compressed size of all files in ZIP
+                # calculate total size of all compressed files inside zip
                 total_compressed_size = sum(file.compress_size for file in zip_file.infolist())
                 
-                # calculate total decompressed size of all files in ZIP
+                # calculate total size of all files after decompression
                 total_decompressed_size = sum(file.file_size for file in zip_file.infolist())
 
-                # calculate compression ratio
+                # if compressed size is greater than 0
                 if total_compressed_size > 0:
                     
+                    # compute compression ratio
                     compression_ratio = total_decompressed_size / total_compressed_size
                 
+                # compression size is 0
                 else:
+                    # avoid divison by 0
+                    # set ratio to 0
                     compression_ratio = 0
-
-                # if compression ratio is bigger than ratio threshold
-                if compression_ratio > compression_ratio_threshold:
                     
-                    # mark file as unsafe
-                    # store in db
-                    return {
-                        
-                        "status": "dangerous",
-                        
-                        "reason_for_flag": f"Compression ratio ({compression_ratio}) exceeds safe threshold.",
-                        
-                        "risk_category": "Zip Bomb"
-                    }
-
-                # if total decompressed size is bigger than 1 GB
+                # check if total decompressed size exceeds limit
                 if total_decompressed_size > max_decompressed_size:
                     
-                    # mark file as unsafe
+                    # mark file unsafe
                     # store in db
                     return {
                         
                         "status": "dangerous",
-                        
-                        "reason_for_flag": f"Decompressed size ({total_decompressed_size} bytes) exceeds limit.",
-                        
-                        "risk_category": "Zip Bomb"
+                        "reason_for_flag": f"Decompressed size ({total_decompressed_size} bytes) exceeds limit",
+                        "risk_category": "Compressed Files"
                     }
 
+                # check if compression ratio exceeds threshold
+                if compression_ratio > compression_ratio_threshold:
+                    
+                    # mark file unsafe
+                    # store in db
+                    return {
+                        
+                        "status": "dangerous",
+                        "reason_for_flag": f"Compression ratio ({compression_ratio}) exceeds safe threshold",
+                        "risk_category": "Compressed Files"
+                    }
 
+        # catch error
         except Exception as e:
             
-            # debugging
+            # logging
             print(f"Error: {e}")
 
-        
         
     # method to check if file is ZIP to analyze for ZIP bombs
     def is_zip_file(self, file_path):
@@ -353,30 +461,29 @@ class Controller:
             self.detect_zip_bombs(file_path)
 
 
-
     # method to check file for vulnerabilities
-    # temporarily checks file extensions
-    # will add more functions which will be called in here
-    # placeholder for scanning logic
+    # calls all other methods which scans files
     def scan_file(self, file_path):
 
+        # logging
         print(f"Scanning file: {file_path}")
         
         # default values
+        # assume safe file initially
         status, risk_level = "safe", "low"
-        
         reason_for_flag, risk_category = None, None
+
 
         # file checkers
         checkers = [
             
             self.double_extension_checker,
             
-            #self.executable_file_checker,
+            self.executable_file_checker,
             
             self.office_file_checker,
             
-            #self.is_zip_file,
+            self.is_zip_file,
             
             self.credential_stealer_checker,
             
@@ -386,17 +493,18 @@ class Controller:
             
             self.detect_obfuscated_entropy
             
-            
         ]
 
         # iterate through checkers
         for checker in checkers:
             
+            # call checker method with file path
             result = checker(file_path)
             
+            # if checker finds an issue
+            # update with results
             if result:
                
-                # update with results
                 status = result["status"]
                 
                 risk_level = result["risk_level"]
@@ -405,11 +513,12 @@ class Controller:
                 
                 risk_category = result["risk_category"]
                 
+                # if issue is found
+                # no need to check further
                 break
 
         # return results
         return status, risk_level, reason_for_flag, risk_category
-
 
 
     # method to process signature files and add them to db
@@ -430,7 +539,7 @@ class Controller:
                 # construct full path for current file by combining folder path and file name
                 file_path = os.path.join(folder_path, file_name)
                 
-                # log file currently being processed
+                # logging file currently being processed
                 print(f"Processing file: {file_path}")
 
                 # buffer for batch inserts
@@ -449,9 +558,7 @@ class Controller:
                         batch.append(
                             {
                                 "signature_type": signature_type,
-                                
                                 "signature_value": signature_value,
-                                
                                 "threat_level": "high",
                             }
                         )
@@ -535,11 +642,8 @@ class Controller:
                         return {
                             
                             "status": "dangerous",
-                            
                             "risk_level": "high",
-                            
                             "reason_for_flag": f"Detected suspicious keyword: {keyword}",
-                            
                             "risk_category": "Credential Stealer",
                         }
                         
@@ -552,18 +656,17 @@ class Controller:
                     # mark file unsafe
                     # store in db
                     return {
+                        
                         "status": "dangerous",
-                        
                         "risk_level": "high",
-                        
                         "reason_for_flag": f"Detected suspicious URLs: {', '.join(urls_found[:5])}",
-                        
                         "risk_category": "Credential Stealer",
                     }
 
-        # log error
+        # catch error
         except Exception as e:
             
+            # logging
             print(f"Error {e}")
 
         # no issues found
@@ -576,7 +679,7 @@ class Controller:
         
         rat_keywords = [
             
-            "RAT", "backdoor", "remote control", "netcat", "nc", "ReverseShell", "bind shell",
+            "RAT", "backdoor", "remote control", "netcat", "ReverseShell", "bind shell",
             
             "RemoteAccess", "netcat", "Telnet", "VNC", "SSH", "sockets", "bind", "exec", 
             
@@ -587,7 +690,7 @@ class Controller:
             "listener", "command_and_control", "shellcode", "bind tcp", "reverse shell"
         ]
         
-        
+          
         try:
             
             # open file in binary read move to prevent execution
@@ -607,17 +710,15 @@ class Controller:
                         return {
                             
                             "status": "dangerous",
-                            
                             "risk_level": "high",
-                            
                             "reason_for_flag": f"Detected RAT-related keyword: {keyword}",
-                            
-                            "risk_category": "Remote Access Tool (RAT)"
+                            "risk_category": "Remote Access Control"
                         }
             
-        # log error
+        # catch error
         except Exception as e:
             
+            # logging
             print(f"Error while checking for RAT: {e}")
         
         return None
@@ -628,7 +729,7 @@ class Controller:
         
         try:
             
-            # debugging
+            # logging
             print(f"Trying to open file at {file_path}")
             
             # open file in binary read mode to prevent execution
@@ -638,15 +739,16 @@ class Controller:
                 # convert to hex format
                 signature = file.read(num_bytes).hex()
                 
-                # debugging
+                # logging
                 print(f"Extracted signature: {signature}")
                 
                 # return extracted file signature
                 return signature
             
-        # log error
+        # catch error
         except Exception as e:
             
+            # logging
             print(f"Error extracting file signature: {e}")
             
             return None
@@ -664,41 +766,37 @@ class Controller:
             # if signature extraction fails
             if not signature:
                 
-                # log error
-                print("Error, no signature extracted, skipping file")
+                # logging
+                print("Error no signature extracted")
                 
                 return None
 
-            # debugging
+            # logging
             print(f"Extracted signature to check: {signature}")
 
             # check extracted signature against db
             result = self.db_manager.check_file_signature(signature)
             
-            # debugging
+            # logging
             print("Database check result:", result)
 
             # if signature matches
             # flag file as unsafe
             if result:
                 
-                # debugging
+                # logging
                 print(f"File header matches known malware signature: {signature}")
                 
                 # store in db
                 return {
                     
                     "status": "dangerous",
-                    
                     "risk_level": "high",
-                    
-                    "reason_for_flag": f"File header matches known malware signature: {signature}.",
-                    
-                    "risk_category": "Malware Signature Match"
-                    
+                    "reason_for_flag": f"File header matches known malware signature: {signature}",
+                    "risk_category": "Virus"
                 }
             
-            #
+            # if signature does not match
             else:
                 
                 # no match found
@@ -707,14 +805,16 @@ class Controller:
             # file not flagged
             return None
 
-        # log error
+        # catch error
         except Exception as e:
             
+            # logging
             print(f"An error occurred: {e}")
             
             return None
 
 
+    
     # calculate entropy of file (randomness)
     # uses Shannon entropy
     # higher entropy indicates obfustication or encrypted content
@@ -752,7 +852,6 @@ class Controller:
     def detect_obfuscated_entropy(self, file_path, threshold=7.5):
         
         try:
-            
             # open file in binary read mode to prevent execution
             with open(file_path, 'rb') as file:
                 
@@ -762,7 +861,7 @@ class Controller:
                 # calculate entropy of file
                 entropy = self.calculate_entropy(content)
 
-                # debugging
+                # logging
                 print(f"Entropy of file '{file_path}': {entropy:.2f}")
 
                 # if entropy exceeds threshold
@@ -773,52 +872,61 @@ class Controller:
                     return {
                         
                         "status": "dangerous",
-                        
                         "risk_level": "high",
-                        
-                        "reason_for_flag": f"File has high entropy ({entropy:.2f}), indicating possible obfuscation.",
-                        
-                        "risk_category": "Obfuscated Code"
+                        "reason_for_flag": f"File has high entropy ({entropy:.2f}), indicating possible obfuscation",
+                        "risk_category": "Obfuscation"
                         
                     }
 
-        # log error
+        # catch error
         except Exception as e:
             
+            # logging
             print(f"Error occurred while processing the file: {e}")
         
         return None
+    
 
+    # method to detect EICAR antivirus test file
+    def detect_eicar_test_file(self, file_path):
+        
+        # define EICAR test file signature in binary
+        eicar_signature = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+        
+        try:
+            # open file in binary mode
+            with open(file_path, "rb") as file:
+                
+                # read entire file content as bytes
+                content = file.read()
+                
+                # check if known EICAR signature exists within the file content
+                if eicar_signature in content:
+                    
+                    # mark file as unsafe
+                    # store in db
+                    return {
                         
+                        "status": "detected",
+                        "risk_level": "low",
+                        "reason_for_flag": "EICAR test file detected",
+                        "risk_category": "Test File"
+                        
+                    }
+                    
+        # catch error
+        except Exception as e:
+            
+            # logging
+            print(f"Error while checking EICAR test file: {e}")
+            
+            return None
+        
+        return None
+
+             
     # close db connection
     def close(self):
         
+        # close connection with db
         self.db_manager.close()
-        
-        
-        
-        
-# for inserting malware header signatures in db  
-# if __name__ == "__main__":
-
-#     # initialise controller
-#     controller = Controller()
-    
-#     try:
-        
-#         # process malware signature
-#         controller.process_signature_files()
-
-#         # debugging
-#         print("All malware signatures have been successfully added to the database")
-
-#     # log error
-#     except Exception as e:
-        
-#         print(f"An error occurred while processing the files: {e}")
-
-
-#     finally:
-        
-#         # close db connection
-#         controller.close()
